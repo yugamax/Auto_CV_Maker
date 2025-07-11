@@ -1,6 +1,6 @@
 import os
 from fastapi import FastAPI, File, UploadFile, Form
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 import asyncio
@@ -35,30 +35,25 @@ async def ping():
 async def upload_pdf(file: UploadFile = File(...)):
     if file.content_type != "application/pdf":
         return JSONResponse(status_code=400, content={"error": "File must be a PDF."})
-    
     contents = await file.read()
     with open("temp_resume.pdf", "wb") as f:
         f.write(contents)
-
     text = pdf_read()
-        
     html_str = gen_res(text)
     pdfkit.from_string(html_str, "resume.pdf")
+    return FileResponse("resume.pdf", media_type="application/pdf", filename="resume.pdf")
 
-    
 @app.post("/upl_chat")
 async def upload_pdf(file: UploadFile = File(...), prompt: str = Form(...)):
     if file.content_type != "application/pdf":
         return JSONResponse(status_code=400, content={"error": "File must be a PDF."})
-    
     contents = await file.read()
     with open("temp_resume.pdf", "wb") as f:
         f.write(contents)
-        
     text = pdf_read()
-
     html_str = gen_res(text, prompt)
     pdfkit.from_string(html_str, "resume.pdf")
+    return FileResponse("resume.pdf", media_type="application/pdf", filename="resume.pdf")
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
