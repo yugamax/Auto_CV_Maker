@@ -45,7 +45,9 @@ async def upload_pdf(file: UploadFile = File(...)):
     with open("temp_resume.pdf", "wb") as f:
         f.write(contents)
     text = pdf_read()
+    print("Extracted text:", text)
     html_str = gen_res(text)
+    print(str(html_str))
     os.remove("temp_resume.pdf")
     pdfkit.from_string(html_str, "resume.pdf")
     return FileResponse("resume.pdf", media_type="application/pdf", filename="resume.pdf")
@@ -61,6 +63,8 @@ async def upload_pdf(file: UploadFile = File(...), prompt: str = Form(...)):
         f.write(contents)
     text = pdf_read()
     html_str = gen_res(text, prompt)
+    print("gen_res output type:", type(html_str))
+    print("gen_res output:", html_str)
     os.remove("temp_resume.pdf")
     pdfkit.from_string(html_str, "resume.pdf")
     return FileResponse("resume.pdf", media_type="application/pdf", filename="resume.pdf")

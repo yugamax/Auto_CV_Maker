@@ -6,29 +6,117 @@ load_dotenv()
 client = Groq(api_key=os.getenv("gr_api_key"))
 
 prompt = """
-ou are an expert resume formatter.
-Your task is to generate a professional HTML resume from two inputs:
+You are an expert resume formatter.
 
-1. Resume Data (Unstructured or JSON-like)
-2. User Instruction (Optional Changes or Style Preferences)
+Your task is to generate a clean, professional, and static HTML resume using two inputs:
 
-✅ Requirements:
+1. **Resume Data (Unstructured)** – Raw resume information without formatting.
+2. **User Instructions (Optional)** – Any specific style preferences or changes requested. If not provided, ignore.
 
-Convert the resume data into a clean, static HTML resume. Bold all section titles (e.g., "Education", "Experience", "Skills", etc.). Draw horizontal lines (using <hr>) between major sections, just like in a professionally formatted resume. If any section (like skills, projects, or publications) is missing or empty, omit it entirely from the HTML. Do not use template variables like {{ name }} or {% for %} – the final output must be static HTML, not a template. Keep spacing, indentation, and structure clean and readable. Apply all additional user instructions exactly (like font changes, hiding sections, etc.).
+✅ **Requirements:**
 
-✅ Input Format You Will Receive:
+- Parse and structure the unformatted resume data into a static HTML resume.
+- Bold all section titles (e.g., "Education", "Experience", "Skills", etc.).
+- Do **not** include any JavaScript, external CSS, or frameworks. Use **only inline CSS** for styling.
+- Maintain a clean, readable layout suitable for professional use.
+- **Output only the final HTML** — no explanation, no formatting tips, no markdown, and no code blocks.
 
-First: Resume data (in freeform text or structured format).
-Second: User instruction (e.g., “Change font to Arial”, “Remove the skills section”, “Move education to the top”, etc.)
+Use the following static HTML template as a structural and stylistic reference:
 
-✅ Your Output Must Be:
-A valid, complete HTML string enclosed in triple double quotes. Use standard <html>, <head>, <style>, and <body> structure. Include inline CSS inside <style> for layout and font styling. Format section headers using <div class="section-title"> and use <hr> for visual separation. Bold important labels or keywords inside sections when helpful. Do not explain your output. Only return the HTML code in triple double quotes."""
+```html
+<!-- resume_template.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>{{ name }} - Resume</title>
+    <style>
+        body {
+            font-family: 'Georgia', 'Times New Roman', serif;
+            margin: 40px 60px;
+            font-size: 12.5px;
+            line-height: 1.6;
+            color: #000;
+        }
+        h1 {
+            font-size: 22px;
+            text-align: center;
+            margin-bottom: 0;
+        }
+        .contact {
+            text-align: center;
+            font-size: 11.5px;
+            margin-bottom: 20px;
+        }
+        hr {
+            border: none;
+            border-top: 1px solid #000;
+            margin: 8px 0;
+        }
+        .section-title {
+            font-weight: bold;
+            font-size: 14px;
+            margin-top: 20px;
+            text-transform: uppercase;
+        }
+        ul {
+            margin-top: 4px;
+            padding-left: 18px;
+        }
+        li {
+            margin-bottom: 3px;
+        }
+    </style>
+</head>
+<body>
+
+<h1>{{ name }}</h1>
+<div class="contact">
+    {{ email }} ∙ {{ phone }} ∙ <a href="{{ linkedin }}">{{ linkedin }}</a>
+</div>
+
+<div class="section-title">Education</div>
+<hr>
+<ul>
+    {% for edu in education %}
+        <li>{{ edu }}</li>
+    {% endfor %}
+</ul>
+
+<div class="section-title">Experience</div>
+<hr>
+<ul>
+    {% for exp in experience %}
+        <li>{{ exp }}</li>
+    {% endfor %}
+</ul>
+
+<div class="section-title">Projects</div>
+<hr>
+<ul>
+    {% for proj in projects %}
+        <li>{{ proj }}</li>
+    {% endfor %}
+</ul>
+
+<div class="section-title">Skills</div>
+<hr>
+<ul>
+    {% for skill in skills %}
+        <li>{{ skill }}</li>
+    {% endfor %}
+</ul>
+
+</body>
+</html>
+
+"""
 
 
 chat_hist= [{"role": "system", "content": prompt}]
 
 def gen_res(text, user_prompt=""):
-    
+
     messages = [
         {"role": "system", "content": prompt},
         {"role": "user", "content": f"Resume Data:\n{text}\nUser Instruction:\n{user_prompt}"}
@@ -42,5 +130,7 @@ def gen_res(text, user_prompt=""):
         )
         res = completion.choices[0].message.content
         return res
+    
     except Exception as e:
+        print(f"Error generating resume: {e}")
         return {"error": str(e)}
