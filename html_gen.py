@@ -6,10 +6,10 @@ load_dotenv()
 client = Groq(api_key=os.getenv("gr_api_key"))
 
 prompt = ""
+chat_hist= [{"role": "system", "content": prompt}]
 
 def gen_res(text, prompt=""):
-    chat_hist= [{"role": "system", "content": prompt}]
-
+    global chat_hist
     try:
         completion = client.chat.completions.create(
             model="llama-3.3-70b-versatile",
