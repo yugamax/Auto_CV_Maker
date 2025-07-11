@@ -6,6 +6,8 @@ import uvicorn
 import asyncio
 import pdfplumber
 from html_gen import gen_res
+from jinja2 import Environment
+import pdfkit
 
 app = FastAPI()
 
@@ -37,8 +39,8 @@ async def upload_pdf(file: UploadFile = File(...)):
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": str(e)})
         
-
-    return {"filename": file.filename, "extracted_text": text}
+    
+    pdfkit.from_string(html_string, "resume.pdf")
 
     
 
