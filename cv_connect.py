@@ -39,11 +39,10 @@ async def upload_pdf(file: UploadFile = File(...)):
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": str(e)})
         
-    
-    pdfkit.from_string(html_string, "resume.pdf")
+    html_str = gen_res(text, prompt="")
+    pdfkit.from_string(html_str, "resume.pdf")
 
     
-
 @app.post("/upl_chat")
 async def upload_pdf(file: UploadFile = File(...)):
     if file.content_type != "application/pdf":
