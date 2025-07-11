@@ -1,5 +1,5 @@
 import os
-from fastapi import FastAPI, File, UploadFile
+from fastapi import FastAPI, File, UploadFile, Form
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
@@ -24,7 +24,7 @@ async def ping():
     return {"message": "server is running"}
 
 @app.post("/upload")
-async def upload_pdf(file: UploadFile = File(...)):
+async def upload_pdf(file: UploadFile = File(...), prompt: str = Form(...)):
     if file.content_type != "application/pdf":
         return JSONResponse(status_code=400, content={"error": "File must be a PDF."})
     
@@ -39,7 +39,7 @@ async def upload_pdf(file: UploadFile = File(...)):
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": str(e)})
         
-    html_str = gen_res(text, prompt="")
+    html_str = gen_res(text, prompt)
     pdfkit.from_string(html_str, "resume.pdf")
 
     
