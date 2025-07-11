@@ -18,6 +18,15 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],)
 
+def pdf_read():
+    try:
+        with pdfplumber.open("temp_resume.pdf") as pdf:
+            for page in pdf.pages:
+                text = page.extract_text()
+                return text
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": str(e)})
+
 @app.api_route("/ping", methods=["GET", "HEAD"])
 async def ping():
     await asyncio.sleep(0.1)
@@ -29,15 +38,10 @@ async def upload_pdf(file: UploadFile = File(...)):
         return JSONResponse(status_code=400, content={"error": "File must be a PDF."})
     
     contents = await file.read()
-    with open("temp.pdf", "wb") as f:
+    with open("temp_resume.pdf", "wb") as f:
         f.write(contents)
 
-    try:
-        with pdfplumber.open("resume.pdf") as pdf:
-            for page in pdf.pages:
-                text = page.extract_text()
-    except Exception as e:
-        return JSONResponse(status_code=500, content={"error": str(e)})
+    text = pdf_read()
         
     html_str = gen_res(text)
     pdfkit.from_string(html_str, "resume.pdf")
@@ -49,9 +53,11 @@ async def upload_pdf(file: UploadFile = File(...), prompt: str = Form(...)):
         return JSONResponse(status_code=400, content={"error": "File must be a PDF."})
     
     contents = await file.read()
-    with open("temp.pdf", "wb") as f:
+    with open("temp_resume.pdf", "wb") as f:
         f.write(contents)
         
+    text = pdf_read()
+
     html_str = gen_res(text, prompt)
     pdfkit.from_string(html_str, "resume.pdf")
 
