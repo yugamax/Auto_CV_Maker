@@ -6,7 +6,6 @@ import uvicorn
 import asyncio
 import pdfplumber
 from html_gen import gen_res
-from jinja2 import Environment
 import pdfkit
 
 app = FastAPI()
@@ -61,3 +60,6 @@ async def upload_pdf(file: UploadFile = File(...), prompt: str = Form(...)):
     html_str = gen_res(text, prompt)
     pdfkit.from_string(html_str, "resume.pdf")
 
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port)
