@@ -17,6 +17,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],)
 
+def check():
+    if os.path.exists("resume.pdf"):
+        os.remove("resume.pdf")
+        print("File deleted.")
+
 def pdf_read():
     try:
         with pdfplumber.open("temp_resume.pdf") as pdf:
@@ -33,6 +38,7 @@ async def ping():
 
 @app.post("/upload")
 async def upload_pdf(file: UploadFile = File(...)):
+    check()
     if file.content_type != "application/pdf":
         return JSONResponse(status_code=400, content={"error": "File must be a PDF."})
     contents = await file.read()
@@ -40,11 +46,14 @@ async def upload_pdf(file: UploadFile = File(...)):
         f.write(contents)
     text = pdf_read()
     html_str = gen_res(text)
+    os.remove("temp_resume.pdf")
     pdfkit.from_string(html_str, "resume.pdf")
     return FileResponse("resume.pdf", media_type="application/pdf", filename="resume.pdf")
 
+
 @app.post("/upl_chat")
 async def upload_pdf(file: UploadFile = File(...), prompt: str = Form(...)):
+    check()
     if file.content_type != "application/pdf":
         return JSONResponse(status_code=400, content={"error": "File must be a PDF."})
     contents = await file.read()
@@ -52,6 +61,7 @@ async def upload_pdf(file: UploadFile = File(...), prompt: str = Form(...)):
         f.write(contents)
     text = pdf_read()
     html_str = gen_res(text, prompt)
+    os.remove("temp_resume.pdf")
     pdfkit.from_string(html_str, "resume.pdf")
     return FileResponse("resume.pdf", media_type="application/pdf", filename="resume.pdf")
 
