@@ -24,26 +24,6 @@ async def ping():
     return {"message": "server is running"}
 
 @app.post("/upload")
-async def upload_pdf(file: UploadFile = File(...), prompt: str = Form(...)):
-    if file.content_type != "application/pdf":
-        return JSONResponse(status_code=400, content={"error": "File must be a PDF."})
-    
-    contents = await file.read()
-    with open("temp.pdf", "wb") as f:
-        f.write(contents)
-
-    try:
-        with pdfplumber.open("resume.pdf") as pdf:
-            for page in pdf.pages:
-                text = page.extract_text()
-    except Exception as e:
-        return JSONResponse(status_code=500, content={"error": str(e)})
-        
-    html_str = gen_res(text, prompt)
-    pdfkit.from_string(html_str, "resume.pdf")
-
-    
-@app.post("/upl_chat")
 async def upload_pdf(file: UploadFile = File(...)):
     if file.content_type != "application/pdf":
         return JSONResponse(status_code=400, content={"error": "File must be a PDF."})
@@ -58,6 +38,20 @@ async def upload_pdf(file: UploadFile = File(...)):
                 text = page.extract_text()
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": str(e)})
+        
+    html_str = gen_res(text)
+    pdfkit.from_string(html_str, "resume.pdf")
 
-    return {"filename": file.filename, "extracted_text": text}
+    
+@app.post("/upl_chat")
+async def upload_pdf(file: UploadFile = File(...), prompt: str = Form(...)):
+    if file.content_type != "application/pdf":
+        return JSONResponse(status_code=400, content={"error": "File must be a PDF."})
+    
+    contents = await file.read()
+    with open("temp.pdf", "wb") as f:
+        f.write(contents)
+        
+    html_str = gen_res(text, prompt)
+    pdfkit.from_string(html_str, "resume.pdf")
 
