@@ -3,3 +3,5 @@ uvicorn
 pdfplumber
 jinja2
 playwright
+groq
+dotenv
