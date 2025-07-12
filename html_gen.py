@@ -6,75 +6,70 @@ load_dotenv()
 client = Groq(api_key=os.getenv("gr_api_key"))
 
 prompt = """
-You are an expert resume formatter.
+You are an expert resume parser and formatter.
 
-Your task is to generate a ATS friendly, clean, professional, and static HTML resume using two inputs:
+Your task is to:
+1. Convert the unstructured resume text below into a structured, clean, and consistent JSON format optimized for applicant tracking systems (ATS).
+2. Make summary concise and impactful, highlighting key skills and achievements.
+3. Do not include any explanations, commentary, or markdown formatting like ```json.
+4. Do not include labels like "Output:", "Here's the resume:", etc.
+5. If the user includes a custom instruction (e.g., "make it fit on one page" or "convert for fresher"), follow it precisely.
+6. If no instruction is given, apply default professional formatting optimized for ATS and readability.
+7. Avoid repeating the same action verbs in bullet points — vary language with strong synonyms.
+8. Extract and infer important fields even from informal, misaligned, or poorly formatted text.
+9. Remove any unnecessary characters, extra whitespace, or line breaks from raw input.
+10. Do not use emojis, markdown, informal words, or headings like "Resume Data".
+11. If the same category appears more than once under achievements (e.g., "Publication", "Conference Paper"), **combine them into a single entry** with multiple descriptions under the same category instead of repeating.
+12. If the resume reflects limited professional experience, intelligently enhance the output by expanding achievements, academic projects, certifications, or summary — to improve balance and professional depth, but only when experience is clearly minimal.
+13. In the experience section, when bullet points lack measurable results, enhance them by inferring appropriate outcomes such as performance improvements, time savings, user impact, or scale. Follow the format: [Action] + [What You Did] + [Result/Metric], but only when context supports a logical and realistic enhancement.
 
-1. Resume Data (Unstructured): Raw resume information provided by the user.
-2. User Instructions (Optional): Any style preferences or custom formatting notes. If not provided, ignore.
+---
+OUTPUT FORMAT (only return this as plain JSON, no markdown):
 
-✅ Requirements:
-- make sure to add this <meta charset="UTF-8">
-- Try to understand the structure of the resume data and format it accordingly.
-- Replace repetitive action words with varied, impactful synonyms where appropriate.
-  For example:
-    - Replace "collaborated" with "worked together", "teamed up", "coordinated", etc.
-    - Replace "designed" with "created", "engineered", "developed", "implemented", etc.
-- Focus on **active voice** and **impact verbs** to make achievements stronger.
-- Improve phrasing and structure if it increases clarity and professionalism.
-- Use <strong> or <b> for bolding text (for subheadings too) — do not use markdown like `**`.
-- Make sure you write everything you are given in the resume data, if user has not given any specific instructions.
-- Write the candidate's name in **uppercase**, **centered**, and **bold** at the top.
-- Maintain a clean and identated, professional layout.
-- Display contact information below the name, centered.
-- Add a horizontal line (<hr>) between the name/contact block and each subsequent section.
-- Ensure the resume fits on a **single A4 PDF page** — use compact layout and optimized spacing.
-- Organize content clearly under sections: **Education**, **Work Experience**, **Projects**, **Publications**, **Leadership**, **Skills**, etc.
-- Only use bullet points where they exist in the input.
-- Use proper HTML structure: <h1>, <h2>, <ul>, <li>, <p>, etc.
-- Do not include any Jinja templating (e.g., {{ name }} or {% for %}).
-- Use only **inline CSS**. No external stylesheets, JS, or libraries.
-- Return only the raw HTML — no markdown, no explanation, no code block formatting.
+{
+  "name": "",
+  "title": "",
+  "phone": "",
+  "email": "",
+  "linkedin": "",
+  "location": "",
+  "summary": "",
+  "experience": [
+    {
+      "title": "",
+      "company": "",
+      "start_date": "",
+      "end_date": "",
+      "location": "",
+      "points": ["", "", ""]
+    }
+  ],
+  "education": [
+    {
+      "degree": "",
+      "institution": "",
+      "start_date": "",
+      "end_date": "",
+      "location": ""
+    }
+  ],
+  "achievements": [
+    {
+      "category": "",
+      "description": ["", "", ""]
+    }
+  ],
+  "skills": ["", "", "", "..."]
+}
 
-✅ Styling Guide:
+---
+Resume Text:
+\"\"\"{{ resume_text }}\"\"\"
 
-- Font: Arial, Helvetica, sans-serif
-- Font size: 13px for body, 22px for name/title, 14px for section headers
-- Line height: 1.5
-- Letter spacing: 0.5px
-- Section headers: UPPERCASE, bold, margin-top: 20px
-- Use <hr> between every major section
-- Use compact <ul><li> spacing (avoid too much vertical gap)
-
-✅ Example Format:
-
-<h1 style="text-align:center; font-size:22px; font-weight:bold;">Karan Johar</h1>
-<p class="contact" style="text-align:center; font-size:12px;">
-  NEW YORK, USA ∙ harshjohar@gmail.com ∙ +91 1234567890 ∙ <a href="#">LinkedIn</a>
-</p>
-<hr>
-
-<h2 style="font-size:14px; font-weight:bold; margin-top:20px; text-transform:uppercase;">Education</h2>
-<ul>
-  <li><b>Columbia University</b>, MS in Management Science and Engineering, 2025–2026</li>
-  <li><b>SRM Institute of Science and Technology</b>, B.E., GPA: 8.74/10, 2021–2025</li>
-</ul>
-<hr>
-
-<h2 style="font-size:14px; font-weight:bold; margin-top:20px; text-transform:uppercase;">Work Experience</h2>
-<ul>
-  <li><b>Jabnex</b>, Product Marketing Intern, Nov 2023 – Present</li>
-  <ul>
-    <li>Improved conversion rates by 30% via customer targeting</li>
-    <li>Reduced lead-to-sale time by 15%</li>
-  </ul>
-</ul>
-<hr>
-
-(And so on for Projects, Publications, Leadership, and Skills)
+User Instructions (if any):
+\"\"\"{{ user_prompt }}\"\"\"
 """
 
-chat_hist= [{"role": "system", "content": prompt}]
 
 def gen_res(text, user_prompt=""):
 
@@ -90,7 +85,6 @@ def gen_res(text, user_prompt=""):
             max_tokens=2048,
         )
         res = completion.choices[0].message.content
-        print("Generated HTML Resume:", res)
         return res
     
     except Exception as e:

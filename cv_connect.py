@@ -6,9 +6,8 @@ import uvicorn
 import asyncio
 import pdfplumber
 from html_gen import gen_res
-import pdfkit
 from jinja2 import Environment, FileSystemLoader
-from weasyprint import HTML
+from playwright.async_api import async_playwright
 import json
 
 app = FastAPI()
@@ -23,7 +22,8 @@ app.add_middleware(
 def check():
     if os.path.exists("resume.pdf"):
         os.remove("resume.pdf")
-        print("File deleted.")
+    if os.path.exists("resume.html"):
+        os.remove("resume.html")
 
 def pdf_read():
     try:
@@ -34,27 +34,26 @@ def pdf_read():
                 if page_text:
                     full_text += page_text + "\n"
             return full_text.strip()
-
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": str(e)})
 
-def pdf_write(text):
+async def pdf_write(text):
     env = Environment(loader=FileSystemLoader("."))
     template = env.get_template("resume_template.html")
+    if isinstance(text, str):
+        text = json.loads(text)
     rendered_html = template.render(**text)
-    HTML(string=rendered_html).write_pdf("resume.pdf")
 
-options = {
-    "page-size": "A4",
-    "margin-top": "0.3in",
-    "margin-bottom": "0.3in",
-    "margin-left": "0.2in",
-    "margin-right": "0.2in",
-    "encoding": "UTF-8",
-    "quiet": "",
-    "disable-smart-shrinking": "",
-    "zoom": "0.9",
-}
+    with open("resume.html", "w", encoding="utf-8") as f:
+        f.write(rendered_html)
+
+    async with async_playwright() as p:
+        browser = await p.chromium.launch()
+        page = await browser.new_page()
+        file_url = f"file://{os.path.abspath('resume.html')}"
+        await page.goto(file_url)
+        await page.pdf(path="resume.pdf", format="A4", print_background=True, margin= {"top": "0in", "bottom": "0in", "left": "0in", "right": "0in"})
+        await browser.close()
 
 
 @app.api_route("/ping", methods=["GET", "HEAD"])
@@ -73,10 +72,8 @@ async def upload_pdf(file: UploadFile = File(...)):
     text = pdf_read()
     html_str = gen_res(text)
     os.remove("temp_resume.pdf")
-    global options
-    pdfkit.from_string(html_str, "resume.pdf", options=options)
+    await pdf_write(html_str)
     return FileResponse("resume.pdf", media_type="application/pdf", filename="resume.pdf")
-
 
 @app.post("/upl_chat")
 async def upload_pdf(file: UploadFile = File(...), prompt: str = Form(...)):
@@ -89,9 +86,7 @@ async def upload_pdf(file: UploadFile = File(...), prompt: str = Form(...)):
     text = pdf_read()
     html_str = gen_res(text, prompt)
     os.remove("temp_resume.pdf")
-    print(html_str)
-    global options
-    pdfkit.from_string(html_str, "resume.pdf", options=options)
+    pdf_write(html_str)
     return FileResponse("resume.pdf", media_type="application/pdf", filename="resume.pdf")
 
 if __name__ == "__main__":

@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>{{ name }} – Resume</title>
+  <style>
+    @page { size: A4; margin: 1cm; }
+    body {
+      font-family: Arial, sans-serif;
+      font-size: 11px;
+      line-height: 1.4;
+      margin: 0;
+      padding: 0;
+      color: #333;
+    }
+    .header {
+      margin-bottom: 12px;
+    }
+    .header h1 {
+      margin: 0;
+      font-size: 20px;
+      color: #000;
+    }
+    .header p.title {
+      margin: 4px 0;
+      font-size: 12px;
+      color: #0077cc;
+      font-weight: bold;
+    }
+    .contact-info {
+      font-size: 10px;
+      margin-bottom: 8px;
+    }
+    .contact-info span {
+      display: inline-block;
+      margin-right: 12px;
+    }
+    h2 {
+      margin: 12px 0 6px;
+      font-size: 13px;
+      color: #0077cc;
+      border-bottom: 1px solid #0077cc;
+      padding-bottom: 2px;
+      text-transform: uppercase;
+    }
+    h3 {
+      margin: 6px 0 2px;
+      font-size: 11px;
+      color: #000;
+      font-weight: bold;
+    }
+    p, ul {
+      margin: 2px 0 6px 0;
+    }
+    li {
+      margin-left: 16px;
+      margin-bottom: 3px;
+      font-size: 11px;
+      line-height: 1.4;
+    }
+    .skills-list {
+      font-size: 11px;
+      margin: 4px 0;
+    }
+    .skills-list span {
+      display: inline-block;
+      margin-right: 8px;
+      margin-bottom: 4px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <div class="header">
+    <h1>{{ name }}</h1>
+    <p class="title">{{ title }}</p>
+    <div class="contact-info">
+      {% if phone %}<span>{{ phone }}</span>{% endif %}
+      {% if email %}<span>{{ email }}</span>{% endif %}
+      {% if linkedin %}<span>{{ linkedin }}</span>{% endif %}
+      {% if location %}<span>{{ location }}</span>{% endif %}
+    </div>
+  </div>
+
+  <!-- Summary -->
+  {% if summary %}
+  <h2>Summary</h2>
+  <p>{{ summary }}</p>
+  {% endif %}
+
+  <!-- Work Experience -->
+  {% if experience %}
+  <h2>Work Experience</h2>
+  {% for job in experience %}
+    <h3>{{ job.title }} — {{ job.company }}</h3>
+    <p><em>{{ job.start_date }} – {{ job.end_date }}, {{ job.location }}</em></p>
+    <ul>
+      {% for point in job.points %}<li>{{ point }}</li>{% endfor %}
+    </ul>
+  {% endfor %}
+  {% endif %}
+
+  <!-- Education -->
+  {% if education %}
+  <h2>Education</h2>
+  {% for edu in education %}
+    <h3>{{ edu.degree }}</h3>
+    <p><strong>{{ edu.institution }}</strong> — {{ edu.start_date }} – {{ edu.end_date }}</p>
+    {% if edu.location %}<p>{{ edu.location }}</p>{% endif %}
+  {% endfor %}
+  {% endif %}
+
+  <!-- Skills -->
+  {% if skills %}
+  <h2>Skills</h2>
+  <div class="skills-list">
+    {% for skill in skills %}<span>{{ skill }}</span>{% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Achievements -->
+  {% if achievements %}
+  <h2>Achievements</h2>
+  {% for ach in achievements %}
+    <h3>{{ ach.category }}</h3>
+    <ul>
+      {% for desc in ach.description %}<li>{{ desc }}</li>{% endfor %}
+    </ul>
+  {% endfor %}
+  {% endif %}
+</body>
+</html>
