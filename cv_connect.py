@@ -25,11 +25,29 @@ def check():
 def pdf_read():
     try:
         with pdfplumber.open("temp_resume.pdf") as pdf:
+            full_text = ""
             for page in pdf.pages:
-                text = page.extract_text()
-                return text
+                page_text = page.extract_text()
+                if page_text:
+                    full_text += page_text + "\n"
+
+            return full_text.strip()
+
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": str(e)})
+    
+options = {
+    "page-size": "A4",
+    "margin-top": "0.3in",
+    "margin-bottom": "0.3in",
+    "margin-left": "0.2in",
+    "margin-right": "0.2in",
+    "encoding": "UTF-8",
+    "quiet": "",
+    "disable-smart-shrinking": "",
+    "zoom": "0.9",
+}
+
 
 @app.api_route("/ping", methods=["GET", "HEAD"])
 async def ping():
@@ -45,11 +63,10 @@ async def upload_pdf(file: UploadFile = File(...)):
     with open("temp_resume.pdf", "wb") as f:
         f.write(contents)
     text = pdf_read()
-    print("Extracted text:", text)
     html_str = gen_res(text)
-    print(str(html_str))
     os.remove("temp_resume.pdf")
-    pdfkit.from_string(html_str, "resume.pdf")
+    global options
+    pdfkit.from_string(html_str, "resume.pdf", options=options)
     return FileResponse("resume.pdf", media_type="application/pdf", filename="resume.pdf")
 
 
@@ -63,10 +80,10 @@ async def upload_pdf(file: UploadFile = File(...), prompt: str = Form(...)):
         f.write(contents)
     text = pdf_read()
     html_str = gen_res(text, prompt)
-    print("gen_res output type:", type(html_str))
-    print("gen_res output:", html_str)
     os.remove("temp_resume.pdf")
-    pdfkit.from_string(html_str, "resume.pdf")
+    print(html_str)
+    global options
+    pdfkit.from_string(html_str, "resume.pdf", options=options)
     return FileResponse("resume.pdf", media_type="application/pdf", filename="resume.pdf")
 
 if __name__ == "__main__":
