@@ -7,6 +7,9 @@ import asyncio
 import pdfplumber
 from html_gen import gen_res
 import pdfkit
+from jinja2 import Environment, FileSystemLoader
+from weasyprint import HTML
+import json
 
 app = FastAPI()
 
@@ -30,12 +33,17 @@ def pdf_read():
                 page_text = page.extract_text()
                 if page_text:
                     full_text += page_text + "\n"
-
             return full_text.strip()
 
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": str(e)})
-    
+
+def pdf_write(text):
+    env = Environment(loader=FileSystemLoader("."))
+    template = env.get_template("resume_template.html")
+    rendered_html = template.render(**text)
+    HTML(string=rendered_html).write_pdf("resume.pdf")
+
 options = {
     "page-size": "A4",
     "margin-top": "0.3in",
