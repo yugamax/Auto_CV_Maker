@@ -86,7 +86,7 @@ async def upload_pdf(file: UploadFile = File(...), prompt: str = Form(...)):
     text = pdf_read()
     html_str = gen_res(text, prompt)
     os.remove("temp_resume.pdf")
-    pdf_write(html_str)
+    await pdf_write(html_str)
     return FileResponse("resume.pdf", media_type="application/pdf", filename="resume.pdf")
 
 if __name__ == "__main__":
